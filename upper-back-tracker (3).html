@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Back Log">
+<meta name="theme-color" content="#E4DCC8">
+<title>Upper-Back Rebuild — Daily Log</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='10' fill='%23E4DCC8'/%3E%3Cpath d='M16 34 L27 45 L48 20' stroke='%23B4460C' stroke-width='7' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23E4DCC8'/%3E%3Cpath d='M16 34 L27 45 L48 20' stroke='%23B4460C' stroke-width='7' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #E4DCC8;
+    --surface: #EFE9DA;
+    --ink: #2A2620;
+    --muted: #5A5343;
+    --accent: #B4460C;
+    --success: #4B7A45;
+    --border: #C7BC9E;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'IBM Plex Sans', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  body { min-height: 100vh; padding: 0 0 56px; }
+  .wrap { max-width: 440px; margin: 0 auto; padding: 0 16px; }
+
+  header.top { padding: 28px 0 18px; border-bottom: 2px solid var(--ink); margin-bottom: 18px; }
+  .top-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+  .docket-no { font-family: 'Oswald', sans-serif; font-size: 12px; letter-spacing: 0.08em; color: var(--muted); font-weight: 500; }
+  h1 { font-family: 'Oswald', sans-serif; font-weight: 600; font-size: 28px; line-height: 1.1; margin: 4px 0 2px; }
+  .day-count { font-family: 'Oswald', sans-serif; font-size: 15px; color: var(--accent); font-weight: 600; }
+  .edit-toggle { flex-shrink: 0; margin-top: 4px; border: 2px solid var(--ink); background: transparent; color: var(--ink); font-family: 'Oswald', sans-serif; font-weight: 600; font-size: 13px; padding: 7px 14px; border-radius: 4px; cursor: pointer; }
+  .edit-toggle.active { background: var(--ink); color: var(--paper); }
+
+  .phase-tabs { display: flex; gap: 8px; margin-bottom: 4px; }
+  .phase-tab { flex: 1; border: 2px solid var(--ink); background: transparent; color: var(--ink); font-family: 'Oswald', sans-serif; font-weight: 600; font-size: 14px; padding: 10px 4px; border-radius: 4px; cursor: pointer; }
+  .phase-tab.active { background: var(--ink); color: var(--paper); }
+  .phase-sub { font-size: 13px; color: var(--muted); margin: 8px 0 20px; }
+
+  section.block { margin-bottom: 22px; }
+  .block-label { font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.04em; padding-bottom: 6px; border-bottom: 1px solid var(--border); margin-bottom: 10px; display: flex; justify-content: space-between; align-items: baseline; }
+  .block-label span.note { font-family: 'IBM Plex Sans', sans-serif; font-weight: 400; font-size: 12px; color: var(--muted); letter-spacing: 0; }
+  .rest-note { font-size: 13px; color: var(--muted); font-style: italic; padding: 4px 0 2px; }
+
+  /* view mode: multi-set exercises, one chip per set */
+  .exercise { padding: 10px 0; }
+  .exercise-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 9px; }
+  .exercise-head .name { font-size: 15px; line-height: 1.3; }
+  .exercise-head .name.all-done { color: var(--muted); text-decoration: line-through; text-decoration-color: var(--border); }
+  .exercise-head .dose { font-size: 13px; color: var(--muted); white-space: nowrap; text-align: right; }
+  .set-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .set-chip {
+    appearance: none; -webkit-appearance: none;
+    width: 36px; height: 36px;
+    border: 2px solid var(--ink); border-radius: 5px;
+    background: var(--surface); position: relative; cursor: pointer;
+  }
+  .set-chip::before {
+    content: attr(data-num);
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Oswald', sans-serif; font-weight: 600; font-size: 13px; color: var(--ink);
+  }
+  .set-chip:checked { background: var(--accent); border-color: var(--accent); }
+  .set-chip:checked::before { content: ''; }
+  .set-chip:checked::after {
+    content: ''; position: absolute; left: 12px; top: 8px; width: 8px; height: 15px;
+    border: solid var(--paper); border-width: 0 2.5px 2.5px 0; transform: rotate(37deg);
+  }
+  .set-chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* edit mode */
+  .edit-item { border: 1px solid var(--border); border-radius: 6px; padding: 10px; margin-bottom: 8px; background: var(--surface); }
+  .edit-line1 { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .edit-line2 { display: flex; align-items: center; gap: 8px; }
+  .edit-input { flex: 1; min-width: 0; font-family: 'IBM Plex Sans', sans-serif; font-size: 14px; padding: 7px 9px; border: 2px solid var(--ink); border-radius: 4px; background: var(--paper); color: var(--ink); }
+  .edit-input.unit { font-size: 13px; }
+  .reorder-btns { display: flex; flex-direction: column; gap: 2px; flex-shrink: 0; }
+  .reorder-btns button, .remove-btn, .stepper button {
+    border: 2px solid var(--ink); background: var(--paper); color: var(--ink); border-radius: 4px; cursor: pointer;
+    font-family: 'Oswald', sans-serif; font-weight: 600; line-height: 1; padding: 0;
+  }
+  .reorder-btns button { width: 26px; height: 20px; font-size: 10px; }
+  .reorder-btns button:disabled { opacity: 0.3; cursor: default; }
+  .remove-btn { width: 30px; height: 30px; font-size: 16px; color: var(--accent); border-color: var(--accent); flex-shrink: 0; }
+  .stepper { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+  .stepper button { width: 28px; height: 28px; font-size: 16px; }
+  .stepper .count { font-family: 'Oswald', sans-serif; font-weight: 600; font-size: 14px; min-width: 16px; text-align: center; }
+  .add-ex-btn { width: 100%; border: 2px dashed var(--border); background: transparent; color: var(--muted); font-family: 'Oswald', sans-serif; font-weight: 600; font-size: 13px; padding: 10px; border-radius: 6px; cursor: pointer; margin-top: 2px; }
+  .add-ex-btn:active { background: var(--surface); }
+  .backup-btn { width: 100%; border: 2px solid var(--ink); background: var(--paper); color: var(--ink); font-family: 'Oswald', sans-serif; font-weight: 600; font-size: 13px; padding: 10px; border-radius: 6px; cursor: pointer; }
+  .backup-btn:active { background: var(--surface); }
+
+  .strip-wrap { margin-top: 26px; }
+  .strip { display: flex; gap: 6px; margin-top: 10px; }
+  .strip-day { flex: 1; text-align: center; }
+  .strip-day .lbl { font-size: 11px; color: var(--muted); margin-bottom: 6px; font-family:'Oswald',sans-serif; letter-spacing:.03em; }
+  .strip-day .box { width: 100%; aspect-ratio: 1; border: 2px solid var(--ink); border-radius: 3px; background: var(--surface); }
+  .strip-day .box.full { background: var(--success); border-color: var(--success); }
+  .strip-day .box.partial { background: linear-gradient(135deg, var(--success) 50%, var(--surface) 50%); }
+  .strip-day.today .box { border-color: var(--accent); border-width: 3px; }
+
+  details.settings { margin-top: 30px; border-top: 2px solid var(--ink); padding-top: 14px; }
+  summary { font-family: 'Oswald', sans-serif; font-weight: 600; font-size: 14px; cursor: pointer; list-style: none; }
+  summary::-webkit-details-marker { display: none; }
+  summary::before { content: '⚙  '; }
+  .settings-row { margin: 16px 0; }
+  .settings-row .lbl { font-size: 12px; color: var(--muted); margin-bottom: 8px; font-family:'Oswald',sans-serif; letter-spacing:.03em; }
+  input[type="date"] { font-family: 'IBM Plex Sans', sans-serif; font-size: 14px; padding: 8px 10px; border: 2px solid var(--ink); border-radius: 4px; background: var(--surface); color: var(--ink); }
+  .day-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+  .day-chip { border: 2px solid var(--ink); background: var(--surface); color: var(--ink); font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 600; padding: 7px 0; width: 42px; border-radius: 4px; cursor: pointer; }
+  .day-chip.on { background: var(--ink); color: var(--paper); }
+
+  .empty-note { font-size: 13px; color: var(--muted); padding: 24px 0 0; }
+  .install-tip { font-size: 12px; color: var(--muted); padding: 18px 0 0; line-height: 1.5; }
+</style>
+</head>
+<body>
+  <div class="wrap" id="app">
+    <p class="empty-note">Loading docket…</p>
+  </div>
+
+<script>
+const STORAGE_KEY = 'upper-back-plan-state';
+const PHASE_META = { 1: { name: 'Foundation' }, 2: { name: 'Build strength' }, 3: { name: 'Load & resilience' } };
+const DAY_LABELS = ['S','M','T','W','T','F','S'];
+let state = null;
+let editMode = false;
+
+function genId() { return 'x' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+function escapeAttr(s) { return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function defaultPlan() {
+  return {
+    1: {
+      mobility: [
+        { id: 'p1-mob-cat-cow', name: 'Cat-Cow', sets: 1, unit: '10 reps' },
+        { id: 'p1-mob-torso-twist', name: 'Torso twist with hold', sets: 3, unit: '20-30s hold /side' },
+        { id: 'p1-mob-doorway-pec', name: 'Doorway pec stretch', sets: 3, unit: '30s' },
+        { id: 'p1-mob-levator', name: 'Levator scapulae stretch', sets: 2, unit: '30s /side' },
+        { id: 'p1-mob-forward-reach', name: 'Forward-reach shoulder blade stretch', sets: 2, unit: '20-30s' },
+      ],
+      strength: [
+        { id: 'p1-str-wall-angels', name: 'Wall angels', sets: 2, unit: '12 reps' },
+        { id: 'p1-str-band-pull-apart', name: 'Band pull-apart', sets: 2, unit: '15 reps' },
+        { id: 'p1-str-archer-pull', name: 'Archer pull', sets: 2, unit: '10 reps /side' },
+      ],
+    },
+    2: {
+      mobility: [
+        { id: 'p2-mob-torso-twist', name: 'Torso twist with hold', sets: 3, unit: '20-30s hold /side' },
+        { id: 'p2-mob-doorway-pec', name: 'Doorway pec stretch', sets: 3, unit: '30s' },
+        { id: 'p2-mob-levator', name: 'Levator scapulae stretch', sets: 2, unit: '30s /side' },
+      ],
+      strength: [
+        { id: 'p2-str-band-pull-apart', name: 'Band pull-apart', sets: 3, unit: '15 reps, heavier band' },
+        { id: 'p2-str-archer-pull', name: 'Archer pull + 2s hold', sets: 3, unit: '12 reps /side' },
+        { id: 'p2-str-ytw', name: 'Prone Y-T-W raises', sets: 2, unit: '8 reps /letter' },
+        { id: 'p2-str-row', name: 'Band or cable row', sets: 3, unit: '12 reps' },
+      ],
+    },
+    3: {
+      mobility: [
+        { id: 'p3-mob-torso-twist', name: 'Torso twist with hold', sets: 3, unit: '20-30s hold /side' },
+        { id: 'p3-mob-doorway-pec', name: 'Doorway pec stretch', sets: 3, unit: '30s' },
+        { id: 'p3-mob-levator', name: 'Levator scapulae stretch', sets: 2, unit: '30s /side' },
+      ],
+      strength: [
+        { id: 'p3-str-row', name: 'Band or dumbbell row', sets: 3, unit: '10-12 reps, heavier' },
+        { id: 'p3-str-archer-pull', name: 'Archer pull', sets: 3, unit: '10 reps /side, heavier band' },
+        { id: 'p3-str-carry', name: "Farmer's / suitcase carry", sets: 3, unit: '30-40m' },
+        { id: 'p3-str-ytw', name: 'Y-T-W raises', sets: 2, unit: '8 reps /letter, light DBs' },
+      ],
+    },
+  };
+}
+function defaultExtras() {
+  return [
+    { id: 'extras-hang', name: 'Hang from bar', sets: 3, unit: '20-30s hold, semi-hang ok (2-3 sets)' },
+    { id: 'extras-thoracic', name: 'Thoracic extension over roller', sets: 1, unit: '30-60s' },
+    { id: 'extras-stomach', name: 'Off the stomach tonight', sets: 1, unit: '' },
+  ];
+}
+function defaultState() {
+  return { startDate: todayKey(), phase: 1, liftDays: [1,3,5], plan: defaultPlan(), extras: defaultExtras(), completions: {} };
+}
+
+function todayKey(d = new Date()) {
+  const y = d.getFullYear(), m = String(d.getMonth()+1).padStart(2,'0'), day = String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+}
+async function loadState() {
+  try {
+    const res = await window.storage.get(STORAGE_KEY, false);
+    if (res && res.value) return JSON.parse(res.value);
+  } catch (e) {}
+  return null;
+}
+async function saveState() {
+  try { await window.storage.set(STORAGE_KEY, JSON.stringify(state), false); }
+  catch (e) { console.error('save failed', e); }
+}
+function dayCount() {
+  const start = new Date(state.startDate + 'T00:00:00');
+  const now = new Date(todayKey() + 'T00:00:00');
+  return Math.max(1, Math.round((now - start) / 86400000) + 1);
+}
+function isLiftDay(date = new Date()) { return state.liftDays.includes(date.getDay()); }
+
+function listAllDone(list, c) {
+  return list.every(e => { for (let s = 0; s < e.sets; s++) if (!c[`${e.id}-s${s}`]) return false; return true; });
+}
+function listAnyDone(list, c) {
+  return list.some(e => { for (let s = 0; s < e.sets; s++) if (c[`${e.id}-s${s}`]) return true; return false; });
+}
+function dayCompletion(key, date) {
+  const c = state.completions[key] || {};
+  const p = state.phase;
+  const mob = state.plan[p].mobility;
+  const mobDone = listAllDone(mob, c);
+  const mobAny = listAnyDone(mob, c);
+  if (!isLiftDay(date)) return mobDone ? 'full' : (mobAny ? 'partial' : 'none');
+  const str = state.plan[p].strength;
+  const strDone = listAllDone(str, c);
+  const strAny = listAnyDone(str, c);
+  if (mobDone && strDone) return 'full';
+  if (mobDone || strDone || mobAny || strAny) return 'partial';
+  return 'none';
+}
+function toggle(itemId, checked) {
+  const key = todayKey();
+  if (!state.completions[key]) state.completions[key] = {};
+  if (checked) state.completions[key][itemId] = true; else delete state.completions[key][itemId];
+  saveState();
+  renderStrip();
+}
+
+function getList(listKey) {
+  if (listKey === 'mob') return state.plan[state.phase].mobility;
+  if (listKey === 'str') return state.plan[state.phase].strength;
+  return state.extras;
+}
+function moveItem(listKey, index, dir) {
+  const list = getList(listKey);
+  const ni = index + dir;
+  if (ni < 0 || ni >= list.length) return;
+  [list[index], list[ni]] = [list[ni], list[index]];
+  saveState(); render();
+}
+function removeItem(listKey, index) {
+  const list = getList(listKey);
+  if (!confirm(`Remove "${list[index].name}"?`)) return;
+  list.splice(index, 1);
+  saveState(); render();
+}
+function addItem(listKey) {
+  const list = getList(listKey);
+  list.push({ id: genId(), name: 'New exercise', sets: 1, unit: '' });
+  saveState(); render();
+}
+function adjustSets(listKey, index, delta) {
+  const list = getList(listKey);
+  const e = list[index];
+  e.sets = Math.min(8, Math.max(1, e.sets + delta));
+  saveState(); render();
+}
+
+function exerciseBlock(e, checkedSets) {
+  const chips = Array.from({ length: e.sets }).map((_, si) =>
+    `<input type="checkbox" class="set-chip" data-id="${e.id}-s${si}" data-num="${si+1}" ${checkedSets[si]?'checked':''}>`
+  ).join('');
+  const allDone = checkedSets.slice(0, e.sets).every(Boolean);
+  return `<div class="exercise">
+      <div class="exercise-head"><span class="name ${allDone?'all-done':''}">${e.name}</span><span class="dose">${e.unit}</span></div>
+      <div class="set-row">${chips}</div>
+    </div>`;
+}
+function renderView(list, c) {
+  return list.map(e => {
+    const checkedSets = Array.from({ length: e.sets }).map((_, s) => !!c[`${e.id}-s${s}`]);
+    return exerciseBlock(e, checkedSets);
+  }).join('');
+}
+function renderEditList(listKey, list) {
+  const rows = list.map((e, i) => `
+    <div class="edit-item">
+      <div class="edit-line1">
+        <div class="reorder-btns">
+          <button class="reorder-up" data-list="${listKey}" data-index="${i}" ${i===0?'disabled':''}>▲</button>
+          <button class="reorder-down" data-list="${listKey}" data-index="${i}" ${i===list.length-1?'disabled':''}>▼</button>
+        </div>
+        <input class="edit-input name" type="text" data-list="${listKey}" data-index="${i}" data-field="name" value="${escapeAttr(e.name)}">
+        <button class="remove-btn" data-list="${listKey}" data-index="${i}">×</button>
+      </div>
+      <div class="edit-line2">
+        <div class="stepper">
+          <button class="sets-minus" data-list="${listKey}" data-index="${i}">−</button>
+          <span class="count">${e.sets}</span>
+          <button class="sets-plus" data-list="${listKey}" data-index="${i}">+</button>
+        </div>
+        <input class="edit-input unit" type="text" data-list="${listKey}" data-index="${i}" data-field="unit" placeholder="sets × reps, hold time..." value="${escapeAttr(e.unit)}">
+      </div>
+    </div>`).join('');
+  return `${rows}<button class="add-ex-btn" data-list="${listKey}">+ Add exercise</button>`;
+}
+
+function render() {
+  const app = document.getElementById('app');
+  const key = todayKey();
+  const c = state.completions[key] || {};
+  const phase = state.phase;
+  const liftToday = isLiftDay();
+  const plan = state.plan[phase];
+
+  const phaseTabsHtml = [1,2,3].map(n => `<button class="phase-tab ${n===phase?'active':''}" data-phase="${n}">Phase ${n}</button>`).join('');
+
+  let mobilityHtml, strengthHtml, extrasHtml, strNote;
+  if (editMode) {
+    mobilityHtml = renderEditList('mob', plan.mobility);
+    strengthHtml = renderEditList('str', plan.strength);
+    extrasHtml = renderEditList('extras', state.extras);
+    strNote = 'editing';
+  } else {
+    mobilityHtml = renderView(plan.mobility, c);
+    strengthHtml = liftToday
+      ? renderView(plan.strength, c)
+      : `<p class="rest-note">Not a lift day — mobility block covers it. Bar hang below is still fair game.</p>`;
+    extrasHtml = renderView(state.extras, c);
+    strNote = liftToday ? 'today' : 'rest today';
+  }
+
+  app.innerHTML = `
+    <header class="top">
+      <div class="top-row">
+        <div>
+          <div class="docket-no">DOCKET NO. ${String(dayCount()).padStart(4,'0')}</div>
+          <h1>Upper-Back Rebuild</h1>
+          <div class="day-count">Day ${dayCount()} · ${liftToday ? 'Lift day' : 'Mobility day'}</div>
+        </div>
+        <button class="edit-toggle ${editMode?'active':''}" id="editToggle">${editMode?'Done':'Edit'}</button>
+      </div>
+    </header>
+
+    <div class="phase-tabs">${phaseTabsHtml}</div>
+    <div class="phase-sub">${PHASE_META[phase].name}</div>
+
+    <section class="block">
+      <div class="block-label">Mobility <span class="note">${editMode?'editing':'daily'}</span></div>
+      ${mobilityHtml}
+    </section>
+
+    <section class="block">
+      <div class="block-label">Strength <span class="note">${strNote}</span></div>
+      ${strengthHtml}
+    </section>
+
+    <section class="block">
+      <div class="block-label">Extras <span class="note">${editMode?'editing':'as able'}</span></div>
+      ${extrasHtml}
+    </section>
+
+    <div class="strip-wrap">
+      <div class="block-label" style="border:none;margin-bottom:0;padding-bottom:0;">Last 7 days</div>
+      <div class="strip" id="strip"></div>
+    </div>
+
+    <details class="settings">
+      <summary>Settings</summary>
+      <div class="settings-row">
+        <div class="lbl">Start date</div>
+        <input type="date" id="startDate" value="${state.startDate}">
+      </div>
+      <div class="settings-row">
+        <div class="lbl">Lift days</div>
+        <div class="day-chips" id="liftDays">
+          ${[1,2,3,4,5,6,0].map(d => `<button class="day-chip ${state.liftDays.includes(d)?'on':''}" data-day="${d}">${DAY_LABELS[d]}</button>`).join('')}
+        </div>
+      </div>
+      <div class="settings-row">
+        <div class="lbl">Backup</div>
+        <button class="backup-btn" id="backupBtn">⬇ Save a backup copy</button>
+        <p class="install-tip">Downloads a working copy of this whole app with everything currently in it — your exercises, sets and history — baked right in. Open that file any time and it'll show this exact data, even without this chat or an internet connection. Worth doing again after any edits.</p>
+      </div>
+      <p class="install-tip">Tap Share in Safari → Add to Home Screen to keep this as an icon on your phone. Your ticks are saved automatically as you go.</p>
+    </details>
+  `;
+
+  // view-mode checkboxes
+  app.querySelectorAll('.set-chip').forEach(cb => {
+    cb.addEventListener('change', (e) => { toggle(e.target.dataset.id, e.target.checked); });
+  });
+  // header
+  document.getElementById('editToggle').addEventListener('click', () => { editMode = !editMode; render(); });
+  app.querySelectorAll('.phase-tab').forEach(btn => {
+    btn.addEventListener('click', () => { state.phase = Number(btn.dataset.phase); saveState(); render(); });
+  });
+  // settings
+  const startDateEl = document.getElementById('startDate');
+  if (startDateEl) startDateEl.addEventListener('change', (e) => { state.startDate = e.target.value; saveState(); render(); });
+  app.querySelectorAll('.day-chip').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const d = Number(btn.dataset.day);
+      const idx = state.liftDays.indexOf(d);
+      if (idx === -1) state.liftDays.push(d); else state.liftDays.splice(idx,1);
+      saveState(); render();
+    });
+  });
+  const backupBtn = document.getElementById('backupBtn');
+  if (backupBtn) backupBtn.addEventListener('click', exportBackup);
+  // edit-mode controls
+  app.querySelectorAll('.reorder-up').forEach(b => b.addEventListener('click', () => moveItem(b.dataset.list, Number(b.dataset.index), -1)));
+  app.querySelectorAll('.reorder-down').forEach(b => b.addEventListener('click', () => moveItem(b.dataset.list, Number(b.dataset.index), 1)));
+  app.querySelectorAll('.remove-btn').forEach(b => b.addEventListener('click', () => removeItem(b.dataset.list, Number(b.dataset.index))));
+  app.querySelectorAll('.add-ex-btn').forEach(b => b.addEventListener('click', () => addItem(b.dataset.list)));
+  app.querySelectorAll('.sets-minus').forEach(b => b.addEventListener('click', () => adjustSets(b.dataset.list, Number(b.dataset.index), -1)));
+  app.querySelectorAll('.sets-plus').forEach(b => b.addEventListener('click', () => adjustSets(b.dataset.list, Number(b.dataset.index), 1)));
+  app.querySelectorAll('.edit-input').forEach(inp => {
+    inp.addEventListener('input', (e) => {
+      const list = getList(e.target.dataset.list);
+      list[Number(e.target.dataset.index)][e.target.dataset.field] = e.target.value;
+    });
+    inp.addEventListener('blur', () => { saveState(); });
+  });
+
+  renderStrip();
+}
+function renderStrip() {
+  const strip = document.getElementById('strip');
+  if (!strip) return;
+  const today = new Date();
+  const cells = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    const key = todayKey(d);
+    const status = dayCompletion(key, d);
+    cells.push(`<div class="strip-day ${i===0?'today':''}">
+        <div class="lbl">${DAY_LABELS[d.getDay()]}</div>
+        <div class="box ${status==='full'?'full':status==='partial'?'partial':''}"></div>
+      </div>`);
+  }
+  strip.innerHTML = cells.join('');
+}
+function getSeedState() {
+  const el = document.getElementById('seed-data');
+  if (!el) return null;
+  try { return JSON.parse(el.textContent); } catch (e) { return null; }
+}
+function exportBackup() {
+  const htmlStr = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+  const seedScript = `<script id="seed-data" type="application/json">${JSON.stringify(state)}</` + `script>`;
+  const out = htmlStr.replace('</body>', seedScript + '</body>');
+  const blob = new Blob([out], { type: 'text/html' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `upper-back-tracker-backup-${todayKey()}.html`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
+
+(async function init() {
+  const loaded = await loadState();
+  const base = loaded || getSeedState();
+  if (base && base.plan && base.extras) {
+    state = base;
+  } else if (base) {
+    state = { startDate: base.startDate || todayKey(), phase: base.phase || 1, liftDays: base.liftDays || [1,3,5], plan: defaultPlan(), extras: defaultExtras(), completions: {} };
+  } else {
+    state = defaultState();
+  }
+  await saveState();
+  render();
+})();
+</script>
+</body>
+</html>
