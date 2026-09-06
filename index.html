@@ -199,15 +199,30 @@ function todayKey(d = new Date()) {
   const y = d.getFullYear(), m = String(d.getMonth()+1).padStart(2,'0'), day = String(d.getDate()).padStart(2,'0');
   return `${y}-${m}-${day}`;
 }
+function hasClaudeStorage() {
+  return typeof window.storage === 'object' && window.storage !== null && typeof window.storage.get === 'function';
+}
 async function loadState() {
+  if (hasClaudeStorage()) {
+    try {
+      const res = await window.storage.get(STORAGE_KEY, false);
+      if (res && res.value) return JSON.parse(res.value);
+    } catch (e) {}
+    return null;
+  }
   try {
-    const res = await window.storage.get(STORAGE_KEY, false);
-    if (res && res.value) return JSON.parse(res.value);
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) return JSON.parse(raw);
   } catch (e) {}
   return null;
 }
 async function saveState() {
-  try { await window.storage.set(STORAGE_KEY, JSON.stringify(state), false); }
+  if (hasClaudeStorage()) {
+    try { await window.storage.set(STORAGE_KEY, JSON.stringify(state), false); }
+    catch (e) { console.error('save failed', e); }
+    return;
+  }
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
   catch (e) { console.error('save failed', e); }
 }
 function dayCount() {
@@ -391,7 +406,7 @@ function render() {
         <button class="backup-btn" id="backupBtn">⬇ Save a backup copy</button>
         <p class="install-tip">Downloads a working copy of this whole app with everything currently in it — your exercises, sets and history — baked right in. Open that file any time and it'll show this exact data, even without this chat or an internet connection. Worth doing again after any edits.</p>
       </div>
-      <p class="install-tip">Tap Share in Safari → Add to Home Screen to keep this as an icon on your phone. Your ticks are saved automatically as you go.</p>
+      <p class="install-tip">Data is saved in this page's own browser storage, so once it's hosted somewhere with a real address (like GitHub Pages) and added to your Home Screen, it'll keep your ticks and edits between visits with no account or internet connection needed. Clearing Safari's site data for that page would wipe it, so the backup above is still worth keeping.</p>
     </details>
   `;
 
